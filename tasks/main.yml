@@ -1,0 +1,42 @@
+---
+- name: Install Winbind
+  apt:
+    name: "{{ item }}"
+    state: present
+  with_items:
+    - samba
+    - winbind
+    - libpam-winbind
+    - libnss-winbind
+    - krb5-config
+    - krb5-user
+
+- name: Update Kerberos configuration
+  template:
+    src: krb5.conf
+    dest: /etc/krb5.conf
+
+- name: Update Samba configuration
+  template:
+    src: smb.conf
+    dest: /etc/samba/smb.conf
+  notify: samba_restart
+
+- name: Update nsswitch.conf
+  lineinfile:
+    regexp: "{{ item.regexp }}"
+    line:   "{{ item.line   }}"
+    dest: /etc/nsswitch.conf
+  with_items:
+    - { regexp: '^passwd:', line: 'passwd:		files winbind' }
+    - { regexp: '^group:' , line: 'group:		files winbind' }
+    - { regexp: '^shadow:', line: 'shadow:		files'         }
+
+- name: Configure PAM authentication
+  template:
+    src: common-auth
+    dest: /etc/pam.d/common-auth
+
+- name: Configure home directory creation
+  copy: src=common-session dest=/etc/pam.d/common-session force=no
+...
