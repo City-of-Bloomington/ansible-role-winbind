@@ -6,6 +6,15 @@ Install winbind, and join a linux host to an Active Directory domain
 
 City-of-Bloomington.linux
 
+# Requirements
+
+This role does not cover the Windows Active Directory setup required.
+You must have already created the groups used for this server in Active Directory.
+
+You need to create a keytab file with the credentials for the Windows admin user
+that has permission to join computers to the domain.
+
+
 # Role Variables
 
 Available variables with example values

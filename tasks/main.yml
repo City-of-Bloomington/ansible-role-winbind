@@ -16,6 +16,11 @@
     src: krb5.conf
     dest: /etc/krb5.conf
 
+- name: Copy Kerberos Keytab
+  shell: "echo \"{{ winbind_keytab }}\" | base64 -d > /etc/krb5.keytab"
+  args:
+    creates: /etc/krb5.keytab
+
 - name: Update Samba configuration
   template:
     src: smb.conf
