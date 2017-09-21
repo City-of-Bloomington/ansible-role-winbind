@@ -11,8 +11,18 @@ City-of-Bloomington.linux
 This role does not cover the Windows Active Directory setup required.
 You must have already created the groups used for this server in Active Directory.
 
-You need to create a keytab file with the credentials for the Windows admin user
-that has permission to join computers to the domain.
+# Group Mapping
+
+This role allows for unlimited number of group mappings.  Group maps have
+been split into Admin groups and User groups.  This lets you declare a
+common set of Admin groups in group_vars, while setting per-host User groups
+in host_vars.
+
+This role expects to use Nested Groups on the local machine.  For us, this
+makes it easier to manage complicated group permissions from Active Directory.
+If you want to map AD groups directly to unix groups on the host machine, you
+will need to modify the groups.yml task file. The rest of the Samba, kerberos,
+and Winbind configuration should be the same.
 
 
 # Role Variables
@@ -22,13 +32,6 @@ Available variables with example values
 ```yml
 winbind_domain: ATHENA.MIT.EDU
 winbind_workgroup: ATHENA
-
-# If you need to lookup a group SID the easiest way to do so is via the command
-# line: wbinfo -n <group name>
-# This group will be granted SUDO access
-winbind_group_admins: S-1-5-21-1004336348-1177238915-682003330-512
-# This group will be generic users on the server
-winbind_group_users: S-1-5-32-545
 
 windbind_krb:
   realms:
@@ -41,6 +44,27 @@ windbind_krb:
   domain_realms:
     - .mit.edu
     - mit.edu
+
+# This must be an Active Directory user with permission to join machines
+# to the domain
+winbind_domain_admin:
+  user: "Adminstrator"
+  pass: "{{ vault_winbind_domain_admin_pass }}"
+
+# If you need to lookup a group SID the easiest way to do so is via the command
+# line: wbinfo -n <group name>
+#
+# This script uses "Nested Groups" to map AD group users to unix groups.
+#
+# I *highly* recommend choosing local names for the ntgroups that do not
+# exist in your Active Directory.  This will avoid future confusion with
+# group membership
+winbind_groupmap_admins:
+  - { ntgroup: "Admins", unixgroup: "sudo",  domain_sid: "S-1-5-21-1004336348-1177238915-682003330-512" }
+
+winbind_groupmap_users:
+  - { ntgroup: "Staff",  unixgroup: "staff", domain_sid: "S-1-5-32-545" }
+
 ```
 
 # Example Playbook
