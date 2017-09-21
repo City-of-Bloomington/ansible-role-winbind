@@ -15,8 +15,8 @@
 
 # here are the per-package modules (the "Primary" block)
 auth    [success=3 default=ignore]  pam_unix.so nullok_secure
-auth    [success=2 default=ignore]  pam_winbind.so krb5_auth krb5_ccache_type=FILE cached_login try_first_pass require_membership_of={{ winbind_group_admins }}
-auth    [success=1 default=ignore]  pam_winbind.so krb5_auth krb5_ccache_type=FILE cached_login try_first_pass require_membership_of={{ winbind_group_users  }}
+auth    [success=2 default=ignore]  pam_winbind.so krb5_auth krb5_ccache_type=FILE cached_login try_first_pass require_membership_of={{ winbind_groupmap_admins.domain_sid }}
+auth    [success=1 default=ignore]  pam_winbind.so krb5_auth krb5_ccache_type=FILE cached_login try_first_pass require_membership_of={{ winbind_groupmap_users.domain_sid  }}
 # here's the fallback if no module succeeds
 auth    requisite           pam_deny.so
 # prime the stack with a positive return value if there isn't one already;

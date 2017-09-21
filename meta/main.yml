@@ -4,7 +4,7 @@ galaxy_info:
   company: City of Bloomington, Indiana
   issue_tracker_url: https://github.com/City-of-Bloomington/ansible-role-winbind/issues
   license: GPLv3
-  min_ansible_version: 2.0
+  min_ansible_version: 2.4
   platforms:
     - name: Ubuntu
       versions:

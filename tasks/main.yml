@@ -11,37 +11,87 @@
     - krb5-config
     - krb5-user
 
-- name: Update Kerberos configuration
+- name: "Update Kerberos configuration"
   template:
-    src: krb5.conf
-    dest: /etc/krb5.conf
+    src: "krb5.conf"
+    dest: "/etc/krb5.conf"
 
-- name: Copy Kerberos Keytab
-  shell: "echo \"{{ winbind_keytab }}\" | base64 -d > /etc/krb5.keytab"
-  args:
-    creates: /etc/krb5.keytab
+- name: "Update Samba configuration"
+  ini_file:
+    path: "/etc/samba/smb.conf"
+    section: "global"
+    option:  "{{ item.option  }}"
+    value:   "{{ item.value   }}"
+  with_items: "{{ winbind_samba_conf }}"
+  notify:
+    - "samba_restart"
+    - "winbind_restart"
 
-- name: Update Samba configuration
-  template:
-    src: smb.conf
-    dest: /etc/samba/smb.conf
-  notify: samba_restart
+- name: "Remove Samba Printers"
+  ini_file:
+    path: "/etc/samba/smb.conf"
+    section: "{{ item }}"
+    state: "absent"
+  with_items:
+    - "printers"
+    - "print$"
+  notify: "samba_restart"
 
-- name: Update nsswitch.conf
+- name: "Update nsswitch.conf"
   lineinfile:
     regexp: "{{ item.regexp }}"
     line:   "{{ item.line   }}"
-    dest: /etc/nsswitch.conf
+    dest: "/etc/nsswitch.conf"
   with_items:
-    - { regexp: '^passwd:', line: 'passwd:		files winbind' }
-    - { regexp: '^group:' , line: 'group:		files winbind' }
-    - { regexp: '^shadow:', line: 'shadow:		files'         }
+    - { regexp: '^passwd:', line: 'passwd:		compat winbind' }
+    - { regexp: '^group:' , line: 'group:		compat winbind' }
+    - { regexp: '^shadow:', line: 'shadow:		compat'         }
+  notify: "samba_restart"
 
-- name: Configure PAM authentication
-  template:
-    src: common-auth
-    dest: /etc/pam.d/common-auth
+- name: "Configure PAM authentication"
+  template: "src=common-auth dest=/etc/pam.d/common-auth"
+  notify: "samba_restart"
 
-- name: Configure home directory creation
-  copy: src=common-session dest=/etc/pam.d/common-session force=no
+- name: "Configure home directory creation"
+  lineinfile:
+    dest: "/etc/pam.d/common-session"
+    regexp: "pam_mkhomedir"
+    line: "session optional        pam_mkhomedir.so skel=/etc/skel/ umask=0022"
+  notify: "samba_restart"
+
+- name: "Check domain status"
+  command: "wbinfo --own-domain"
+  register: "domain"
+
+- name: "Join domain"
+  command: "net join -U {{ winbind_domain_admin.user }}%{{ winbind_domain_admin.pass }}"
+  no_log: True
+  when: domain.stdout != winbind_workgroup
+
+- name: "Check admins group mapping"
+  shell: >
+    net groupmap list ntgroup="{{ winbind_groupmap_admins.local_name }}" | grep -oP "\(\K[0-9S\-]+"
+  register: admins_sid
+  ignore_errors: True
+
+- name: "Create admins group mapping"
+  shell: >
+    net groupmap add ntgroup="{{ winbind_groupmap_admins.local_name }}" unixgroup="sudo" type=local
+  when: admins_sid.stdout == ""
+  notify: "winbind_restart"
+
+- name: "Check admins group mapping"
+  shell: >
+    net groupmap list ntgroup="{{ winbind_groupmap_admins.local_name }}" | grep -oP "\(\K[0-9S\-]+"
+  register: admins_sid
+  failed_when: admins_sid.stdout == ""
+
+- name: "Check admins domain group membership"
+  command: "net groupmap listmem {{ admins_sid.stdout }}"
+  register: domain_group
+
+- name: "Add domain admins group to local admins group"
+  command: "net groupmap addmem {{ admins_sid.stdout }} {{ winbind_groupmap_admins.domain_sid }}"
+  when: domain_group.stdout != winbind_groupmap_admins.domain_sid
+  notify: "winbind_restart"
 ...

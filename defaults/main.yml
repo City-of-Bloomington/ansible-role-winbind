@@ -1,0 +1,55 @@
+---
+winbind_domain:
+winbind_workgroup: WORKGROUP
+
+winbind_krb:
+  realms:
+    kdc:
+    admin_server:
+    default_domain:
+  domain_realms:
+
+# This must be an Active Directory user with permission to join machines
+# to the domain
+winbind_domain_admin:
+  user: "Administrator"
+  pass: "{{ vault_winbind_domain_admin_pass }}"
+
+
+# If you need to lookup a group SID the easiest way to do so is via the command
+# line: wbinfo -n <group name>
+#
+# This script uses "Nested Groups" to map AD group users to unix groups.
+# The admins group will be mapped to "sudo"
+# The users  group will be mapped to "staff"
+#
+# I *highly* recommend choosing local names for the ntgroups that do not
+# exist in your Active Directory.  This will avoid future confusion with
+# group membership
+winbind_groupmap_admins:
+  local_name: Admins
+  domain_sid:
+
+winbind_groupmap_users:
+  local_name: Staff
+  domain_sid:
+
+winbind_samba_conf:
+  - { option: "security",  value: "ADS" }
+  - { option: "workgroup", value: "{{ winbind_workgroup }}" }
+  - { option: "realm",     value: "{{ winbind_domain    }}" }
+  - { option: "allow dns updates", value: "disabled"  }
+  - { option: "template shell",    value: "/bin/bash" }
+  - { option: "template homedir",  value: "/home/%U"  }
+  - { option: "idmap config * : backend",                           value: "tdb"           }
+  - { option: "idmap config * : range",                             value: "200000-500000" }
+  - { option: "idmap config {{ winbind_workgroup }} : backend",     value: "ad"            }
+  - { option: "idmap config {{ winbind_workgroup }} : range",       value: "1000-199999"   }
+  - { option: "idmap config {{ winbind_workgroup }} : default",     value: "yes"           }
+  - { option: "idmap config {{ winbind_workgroup }} : schema_mode", value: "rfc2307"       }
+  - { option: "winbind separator",          value: "+"       }
+  - { option: "winbind use default domain", value: "yes"     }
+  - { option: "winbind enum users",         value: "yes"     }
+  - { option: "winbind enum groups",        value: "no"      }
+  - { option: "winbind nss info",           value: "rfc2307" }
+...
