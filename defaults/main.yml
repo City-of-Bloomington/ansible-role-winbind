@@ -1,38 +1,11 @@
 ---
-winbind_domain:
 winbind_workgroup: WORKGROUP
-
-winbind_krb:
-  realms:
-    kdc:
-    admin_server:
-    default_domain:
-  domain_realms:
 
 # This must be an Active Directory user with permission to join machines
 # to the domain
 winbind_domain_admin:
   user: "Administrator"
   pass: "{{ vault_winbind_domain_admin_pass }}"
-
-
-# If you need to lookup a group SID the easiest way to do so is via the command
-# line: wbinfo -n <group name>
-#
-# This script uses "Nested Groups" to map AD group users to unix groups.
-# The admins group will be mapped to "sudo"
-# The users  group will be mapped to "staff"
-#
-# I *highly* recommend choosing local names for the ntgroups that do not
-# exist in your Active Directory.  This will avoid future confusion with
-# group membership
-winbind_groupmap_admins:
-  local_name: Admins
-  domain_sid:
-
-winbind_groupmap_users:
-  local_name: Staff
-  domain_sid:
 
 winbind_samba_conf:
   - { option: "security",  value: "ADS" }

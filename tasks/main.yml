@@ -68,30 +68,10 @@
   no_log: True
   when: domain.stdout != winbind_workgroup
 
-- name: "Check admins group mapping"
-  shell: >
-    net groupmap list ntgroup="{{ winbind_groupmap_admins.local_name }}" | grep -oP "\(\K[0-9S\-]+"
-  register: admins_sid
-  ignore_errors: True
+- name: "Group mapping"
+  include_tasks: "groups.yml"
+  vars:
+    groupmap: "{{ item }}"
+  with_items: "{{ winbind_groupmap_admins | union(winbind_groupmap_users)}}"
 
-- name: "Create admins group mapping"
-  shell: >
-    net groupmap add ntgroup="{{ winbind_groupmap_admins.local_name }}" unixgroup="sudo" type=local
-  when: admins_sid.stdout == ""
-  notify: "winbind_restart"
-
-- name: "Check admins group mapping"
-  shell: >
-    net groupmap list ntgroup="{{ winbind_groupmap_admins.local_name }}" | grep -oP "\(\K[0-9S\-]+"
-  register: admins_sid
-  failed_when: admins_sid.stdout == ""
-
-- name: "Check admins domain group membership"
-  command: "net groupmap listmem {{ admins_sid.stdout }}"
-  register: domain_group
-
-- name: "Add domain admins group to local admins group"
-  command: "net groupmap addmem {{ admins_sid.stdout }} {{ winbind_groupmap_admins.domain_sid }}"
-  when: domain_group.stdout != winbind_groupmap_admins.domain_sid
-  notify: "winbind_restart"
 ...

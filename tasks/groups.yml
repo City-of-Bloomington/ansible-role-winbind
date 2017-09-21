@@ -1,0 +1,28 @@
+---
+- name: "Check group mapping"
+  shell: >
+    net groupmap list ntgroup="{{ groupmap.ntgroup }}" | grep -oP "\(\K[0-9S\-]+"
+  register: ntgroup_sid
+  ignore_errors: True
+
+- name: "Create group mapping"
+  shell: >
+    net groupmap add ntgroup="{{ groupmap.ntgroup }}" unixgroup="{{ groupmap.unixgroup }}" type=local
+  when: ntgroup_sid.stdout == ""
+  notify: "winbind_restart"
+
+- name: "Check group mapping"
+  shell: >
+    net groupmap list ntgroup="{{ groupmap.ntgroup }}" | grep -oP "\(\K[0-9S\-]+"
+  register: ntgroup_sid
+  failed_when: ntgroup_sid.stdout == ""
+
+- name: "Check domain group membership"
+  command: "net groupmap listmem {{ ntgroup_sid.stdout }}"
+  register: domain_group
+
+- name: "Add domain group to local group"
+  command: "net groupmap addmem {{ ntgroup_sid.stdout }} {{ groupmap.domain_sid }}"
+  when: domain_group.stdout != groupmap.domain_sid
+  notify: "winbind_restart"
+...

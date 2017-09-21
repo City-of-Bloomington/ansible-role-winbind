@@ -14,9 +14,12 @@
 # pam-auth-update(8) for details.
 
 # here are the per-package modules (the "Primary" block)
-auth    [success=3 default=ignore]  pam_unix.so nullok_secure
-auth    [success=2 default=ignore]  pam_winbind.so krb5_auth krb5_ccache_type=FILE cached_login try_first_pass require_membership_of={{ winbind_groupmap_admins.domain_sid }}
-auth    [success=1 default=ignore]  pam_winbind.so krb5_auth krb5_ccache_type=FILE cached_login try_first_pass require_membership_of={{ winbind_groupmap_users.domain_sid  }}
+{% set groupmap = winbind_groupmap_admins|union(winbind_groupmap_users) %}
+{% set total    = groupmap|length %}
+auth    [success={{ total + 1           }} default=ignore]  pam_unix.so nullok_secure
+{% for group in groupmap %}
+auth    [success={{ total - loop.index0 }} default=ignore]  pam_winbind.so krb5_auth krb5_ccache_type=FILE cached_login try_first_pass require_membership_of={{ group.domain_sid }}
+{% endfor %}
 # here's the fallback if no module succeeds
 auth    requisite           pam_deny.so
 # prime the stack with a positive return value if there isn't one already;
