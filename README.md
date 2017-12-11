@@ -1,6 +1,7 @@
 # City-of-Bloomington.winbind
 
-Install winbind, and join a linux host to an Active Directory domain
+Install winbind, and join a linux host to an Active Directory domain.
+Configures Samba for NT-style permissions and strict ownership of user home folders.
 
 ## Dependencies
 
