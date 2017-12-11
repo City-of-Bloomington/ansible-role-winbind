@@ -45,7 +45,7 @@
   with_items:
     - { regexp: '^passwd:', line: 'passwd:		compat winbind' }
     - { regexp: '^group:' , line: 'group:		compat winbind' }
-    - { regexp: '^shadow:', line: 'shadow:		compat'         }
+    - { regexp: '^shadow:', line: 'shadow:		compat winbind' }
   notify: "samba_restart"
 
 - name: "Configure PAM authentication"
@@ -56,7 +56,7 @@
   lineinfile:
     dest: "/etc/pam.d/common-session"
     regexp: "pam_mkhomedir"
-    line: "session optional        pam_mkhomedir.so skel=/etc/skel/ umask=0022"
+    line: "session optional        pam_mkhomedir.so skel=/etc/skel/ umask=077"
   notify: "samba_restart"
 
 - name: "Check domain status"
@@ -67,11 +67,4 @@
   command: "net join -U {{ winbind_domain_admin.user }}%{{ winbind_domain_admin.pass }}"
   no_log: True
   when: domain.stdout != winbind_workgroup
-
-- name: "Group mapping"
-  include_tasks: "groups.yml"
-  vars:
-    groupmap: "{{ item }}"
-  with_items: "{{ winbind_groupmap_admins | union(winbind_groupmap_users)}}"
-
 ...
