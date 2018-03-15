@@ -16,13 +16,14 @@ winbind_samba_conf:
   - { option: "template homedir",  value: "/home/%U"  }
   - { option: "idmap config * : backend",                           value: "tdb"           }
   - { option: "idmap config * : range",                             value: "200000-500000" }
-  - { option: "idmap config {{ winbind_workgroup }} : backend",     value: "ad"            }
-  - { option: "idmap config {{ winbind_workgroup }} : range",       value: "1000-199999"   }
+  - { option: "idmap config {{ winbind_workgroup }} : backend",     value: "rid"            }
+  - { option: "idmap config {{ winbind_workgroup }} : range",       value: "0-199999"   }
+  - { option: "idmap config {{ winbind_workgroup }} : base_rid",     value: "0"      }
   - { option: "idmap config {{ winbind_workgroup }} : default",     value: "yes"           }
   - { option: "idmap config {{ winbind_workgroup }} : schema_mode", value: "rfc2307"       }
   - { option: "winbind separator",          value: "+"       }
   - { option: "winbind use default domain", value: "yes"     }
   - { option: "winbind enum users",         value: "yes"     }
-  - { option: "winbind enum groups",        value: "no"      }
+  - { option: "winbind enum groups",        value: "yes"      }
   - { option: "winbind nss info",           value: "rfc2307" }
 ...
