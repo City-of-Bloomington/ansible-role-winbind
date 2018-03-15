@@ -67,7 +67,7 @@
   command: "net join -U {{ winbind_domain_admin.user }}%{{ winbind_domain_admin.pass }}"
   no_log: True
   when: domain.stdout != winbind_workgroup
-...
 
 - name: "Grant SeDiskOperatorPrivilige to Domain Admins"
   command: 'net rpc rights grant "{{ winbind_workgroup }}\Domain Admins" SeDiskOperatorPrivilege -U {{ winbind_domain_admin.user }}%{{ winbind_domain_admin.pass }}'
+...
