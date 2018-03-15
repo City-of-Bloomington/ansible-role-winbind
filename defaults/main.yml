@@ -26,4 +26,9 @@ winbind_samba_conf:
   - { option: "winbind enum users",         value: "yes"     }
   - { option: "winbind enum groups",        value: "yes"      }
   - { option: "winbind nss info",           value: "rfc2307" }
+  - { option: "vfs objects",                value: "acl_xattr" }
+  - { option: "map acl inherit",            value: "yes" }
+  - { option: "store dos attributes",       value: "yes" }
+  - { option: "hide unreadable",            value: "yes" }
+  - { option: "include",                    value: "/etc/samba/shares.conf" }
 ...

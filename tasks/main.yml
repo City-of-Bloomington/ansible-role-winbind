@@ -68,13 +68,14 @@
   no_log: True
   when: domain.stdout != winbind_workgroup
 
-- name: "Grant SeDiskOperatorPrivilige to Domain Admins"
-  command: 'net rpc rights grant "{{ winbind_workgroup }}\Domain Admins" SeDiskOperatorPrivilege -U {{ winbind_domain_admin.user }}%{{ winbind_domain_admin.pass }}'
-
 - name: "Group mapping"
   include_tasks: "groups.yml"
   vars:
     groupmap: "{{ item }}"
   with_items: "{{ winbind_groupmap_admins | union(winbind_groupmap_users)}}"
 
+- name: "Grant SeDiskOperatorPrivilige to Domain Admins (may have to reboot and try again)"
+  command: "net rpc rights grant '{{ winbind_workgroup }}+Domain Admins' SeDiskOperatorPrivilege -U {{ winbind_domain_admin.user }}%{{ winbind_domain_admin.pass }}"
+  ignore_errors: True
+  
 ...
