@@ -48,7 +48,7 @@ windbind_krb:
 # This must be an Active Directory user with permission to join machines
 # to the domain
 winbind_domain_admin:
-  user: "Adminstrator"
+  user: "Administrator"
   pass: "{{ vault_winbind_domain_admin_pass }}"
 
 # If you need to lookup a group SID the easiest way to do so is via the command
